@@ -17,6 +17,7 @@ builder.Services.AddScoped<ISiteRepository, SiteRepository>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<ISiteLoginService, SiteLoginService>();
 
 var app = builder.Build();
 

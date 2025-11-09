@@ -9,10 +9,12 @@ namespace WebAPI.Controllers
     public class SiteController : ControllerBase
     {
         private readonly ISiteRepository _repo;
+        private readonly ISiteLoginService _loginService;
 
-        public SiteController(ISiteRepository repo)
+        public SiteController(ISiteRepository repo, ISiteLoginService loginService)
         {
             _repo = repo;
+            _loginService = loginService;
         }
 
         [HttpGet]
@@ -44,6 +46,18 @@ namespace WebAPI.Controllers
         {
             await _repo.UpdateSiteAsync(site);
             return Ok(site);
+        }
+
+        [HttpGet("login/{id:int}")]
+        public async Task<IActionResult> TestLogin(int id)
+        {
+            var site = await _repo.GetSiteByIdAsync(id);
+            if (site == null)
+            {
+                return NotFound();
+            }
+            bool success = await _loginService.LoginAsync(site);
+            return Ok( new { site.SiteName, LoginSuccess = success } );
         }
     }
 }
