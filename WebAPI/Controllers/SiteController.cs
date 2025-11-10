@@ -47,17 +47,22 @@ namespace WebAPI.Controllers
             await _repo.UpdateSiteAsync(site);
             return Ok(site);
         }
-
-        [HttpGet("login/{id:int}")]
-        public async Task<IActionResult> TestLogin(int id)
+        [HttpPost("delete")]
+        public async Task<IActionResult> DeleteSite(int id)
         {
-            var site = await _repo.GetSiteByIdAsync(id);
-            if (site == null)
-            {
-                return NotFound();
-            }
-            bool success = await _loginService.LoginAsync(site);
-            return Ok( new { site.SiteName, LoginSuccess = success } );
+            await _repo.DeleteSiteAsync(id);
+            return Ok();
+        }
+
+        [HttpGet("check-all-logins")]
+        public async Task<IActionResult> CheckAllLogins()
+        {
+            var sites = await _repo.GetAllSitesAsync();
+            var tasks = sites.Select(site => _loginService.LoginAsync(site));
+            var results = await Task.WhenAll(tasks);
+
+            var output = sites.Select((s, i) => new { s.SiteName, IsLoggedIn = results[i] });
+            return Ok(output);
         }
     }
 }
