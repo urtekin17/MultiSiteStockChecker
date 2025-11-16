@@ -38,6 +38,7 @@ namespace WebAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> AddSite([FromBody] Site site)
         {
+
             await _repo.AddSiteAsync(site);
             return CreatedAtAction(nameof(GetSiteById), new { id = site.Id }, site);
         }
