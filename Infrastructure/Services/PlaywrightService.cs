@@ -57,7 +57,6 @@ namespace Infrastructure.Services
                 return _loginDurations.Average();
             }
         }
-
         public async ValueTask DisposeAsync()
         {
             if (browser != null) await browser.CloseAsync();
