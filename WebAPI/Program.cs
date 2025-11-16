@@ -6,16 +6,6 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
-builder.Services.AddSingleton<EncryptionDbInterceptor>();
-builder.Services.AddDbContextFactory<AppDbContext>((sp, options) =>
-{
-    var conn = builder.Configuration.GetConnectionString("DefaultConnection");
-    options.UseSqlite(conn);
-    var interceptor = sp.GetRequiredService<EncryptionDbInterceptor>();
-    options.AddInterceptors(interceptor);
-});
-
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 

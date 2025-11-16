@@ -50,9 +50,6 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("PasswordEncrypted")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("SiteName")
                         .IsRequired()
                         .HasMaxLength(200)
