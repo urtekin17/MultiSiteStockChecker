@@ -1,15 +1,11 @@
 ﻿using Application.Interfaces;
 using Core.Models;
 using Infrastructure.Services;
+using Infrastructure.Utilities;
+using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
-using PuppeteerSharp;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace Infrastructure.Repositories
 {
@@ -25,33 +21,35 @@ namespace Infrastructure.Repositories
         {
             await _playwrightService.InitializeAsync();
             _playwrightService.IncrementPageCount();
-
+            var selectors = JsonParser.ParseValues(site.ExtraParamJson);
             var stopwatch = Stopwatch.StartNew();
-            
             var page = await _playwrightService.browser.NewPageAsync();
-
             try
             {
                 await page.GotoAsync(site.LoginUrl, new() { WaitUntil = WaitUntilState.NetworkIdle });
-                await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
-                await page.WaitForSelectorAsync("input[name='usercode']", new() { Timeout = 5000 });
-                await page.WaitForSelectorAsync("input[name='userpassword']", new() { Timeout = 5000 });
-                await page.FillAsync("input[name='usercode']", site.UserName);
-                await page.FillAsync("input[name='userpassword']", site.Password);
-                await page.ClickAsync("input[value='Giriş Yap']");
-                await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-                // Giriş başarılı mı kontrol et
-                bool isLoggedIn = !await page.IsVisibleAsync("input[name='userpassword']");
-                return isLoggedIn;
-            }
-            catch (TargetClosedException tex)
-            {
-                Console.WriteLine($"[{site.SiteName}] Page closed unexpectedly: {tex.Message}");
-                return false;
+                // Alanları bekle
+                await page.WaitForSelectorAsync(selectors["userSelector"], new() { Timeout = 10000 });
+                await page.WaitForSelectorAsync(selectors["passwordSelector"], new() { Timeout = 10000 });
+                //Selector kontrolu
+                var user = page.QuerySelectorAsync(selectors["userSelector"]);
+                var pass = page.QuerySelectorAsync(selectors["passwordSelector"]);
+                var sbmt = page.QuerySelectorAsync(selectors["submitSelector"]);
+                // Doldur
+                await page.FillAsync(selectors["userSelector"], site.UserName);
+                await page.FillAsync(selectors["passwordSelector"], site.Password);
+                // Butona bas
+                await page.ClickAsync(selectors["submitSelector"]);
+                // Yüklenme bekle
+                await page.WaitForTimeoutAsync(2000);
+                // Sayfa kapandıysa → login başarılıdır
+                if (page.IsClosed)
+                    return true;
+                // fallback — password alanı kaybolmuş mu?
+                return !await page.IsVisibleAsync(selectors["passwordSelector"]);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Login error for {site.SiteName}: {ex.Message}");
+                Console.WriteLine($"[{site.SiteName}] Login error: {ex.Message}");
                 return false;
             }
             finally
@@ -62,13 +60,11 @@ namespace Infrastructure.Repositories
                 {
                     if (!page.IsClosed) await page.CloseAsync();
                 }
-                catch (Exception)
-                {
-                }
-                
+                catch { }
+
                 _playwrightService.DecrementPageCount();
             }
-
         }
+
     }
 }
