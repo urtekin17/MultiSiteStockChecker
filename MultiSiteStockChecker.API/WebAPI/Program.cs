@@ -12,6 +12,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddSingleton<PlaywrightService>();
 builder.Services.AddScoped<ISiteRepository, SiteRepository>();
 builder.Services.AddScoped<ISiteLoginService, SiteLoginService>();
+builder.Services.AddScoped<IStockService, StockService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
